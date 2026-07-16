@@ -1,0 +1,76 @@
+name: On Demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment (TEST_ENV)'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [dev, staging, prod]
+      grep:
+        description: 'Playwright --grep pattern (optional, runs full suite if empty)'
+        required: false
+        default: ''
+        type: string
+
+  repository_dispatch:
+    types: [run-tests]
+
+permissions:
+  contents: read
+
+env:
+  TEST_ENV: ${{
+    github.event.client_payload.environment ||
+    github.event.inputs.environment ||
+    'staging' }}
+
+jobs:
+  test:
+    name: Run tests on ${{
+      github.event.client_payload.environment ||
+      github.event.inputs.environment ||
+      'staging'
+      }}
+    runs-on: ubuntu-latest
+    environment: ${{
+      github.event.client_payload.environment ||
+      github.event.inputs.environment ||
+      'staging' }}
+
+    env:
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      API_AUTH_TOKEN: ${{ secrets.API_AUTH_TOKEN }}
+      API_ADMIN_USERNAME: ${{ secrets.API_ADMIN_USERNAME }}
+      API_ADMIN_PASSWORD: ${{ secrets.API_ADMIN_PASSWORD }}
+      API_MAX_RESPONSE_MS: ${{ secrets.API_MAX_RESPONSE_MS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: |
+          GREP="${{ github.event.client_payload.grep || github.event.inputs.grep }}"
+          if [ -n "$GREP" ]; then
+            pnpm test --grep "$GREP"
+          else
+            pnpm test
+          fi
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report-${{ env.TEST_ENV }}-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14

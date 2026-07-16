@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Secrets / auth cache
+.auth/
+.env.local
+.env.*.local
+
+# Test artefacts
+playwright-report/
+test-results/
+
+# Build output
+dist/
+
+# Editor / OS junk
+.DS_Store
+*.swp
+*~
+
+# Local archives (e.g. zip exports of the project)
+*.zip

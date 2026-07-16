@@ -1,0 +1,70 @@
+name: Nightly
+
+on:
+  # Scheduled runs disabled — too many failure emails. Uncomment to re-enable.
+  # schedule:
+  #   - cron: '0 18 * * 5' # Friday 01:00 UTC+7
+
+  # Manual trigger: pick environment. For ad-hoc runs with a --grep filter,
+  # use the on-demand.yml workflow instead.
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [dev, staging, prod]
+
+permissions:
+  contents: read
+
+env:
+  TEST_ENV: ${{ github.event.inputs.environment || 'staging' }}
+
+jobs:
+  test:
+    name: Full suite on ${{ github.event.inputs.environment || 'staging' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    env:
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      API_AUTH_TOKEN: ${{ secrets.API_AUTH_TOKEN }}
+      API_ADMIN_USERNAME: ${{ secrets.API_ADMIN_USERNAME }}
+      API_ADMIN_PASSWORD: ${{ secrets.API_ADMIN_PASSWORD }}
+      API_MAX_RESPONSE_MS: ${{ secrets.API_MAX_RESPONSE_MS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report-${{ env.TEST_ENV }}-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Notify Telegram on failure
+        # Skip if Telegram secrets aren't configured — silent post to 404 otherwise
+        if: failure() && env.TELEGRAM_BOT_TOKEN != ''
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            -d text="❌ *${{ github.workflow }}* failed on \`${{ env.TEST_ENV }}\`
+          [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
