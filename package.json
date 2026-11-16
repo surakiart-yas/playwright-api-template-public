@@ -22,16 +22,16 @@
     "verify": "pnpm lint && pnpm type-check && pnpm test"
   },
   "devDependencies": {
-    "@hono/node-server": "^2.0.4",
-    "@playwright/test": "^1.60.0",
+    "@hono/node-server": "^2.1.8",
+    "@playwright/test": "^1.65.0",
     "@types/node": "^25.9.1",
-    "@typescript-eslint/eslint-plugin": "^8.59.4",
-    "@typescript-eslint/parser": "^8.59.4",
+    "@typescript-eslint/eslint-plugin": "^8.72.2",
+    "@typescript-eslint/parser": "^8.72.2",
     "cross-env": "^10.1.0",
-    "eslint": "^10.4.0",
-    "hono": "^4.12.23",
-    "prettier": "^3.8.3",
-    "tsx": "^4.22.3",
+    "eslint": "^10.14.0",
+    "hono": "^4.13.18",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   },
   "dependencies": {
