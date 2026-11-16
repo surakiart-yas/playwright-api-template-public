@@ -18,7 +18,7 @@ jobs:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
 
@@ -41,7 +41,7 @@ jobs:
     # safe for fork PRs, no parallel-PR state collisions.
     # Nightly + on-demand workflows hit real environments.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v6
 
